@@ -9,15 +9,15 @@ Compatibility metadata checks the version name, not build code or ABI. The origi
 
 ## Build and verification
 
-Use JDK 17, Android SDK, and Reseam CLI and Gradle plugin 0.28.0. The existing publisher key is `~/.reseam/bundle-signing.key`; keep it private and back it up securely. Build with `RESEAM_BUNDLE_KEY` pointing to it and `./gradlew --no-daemon bundle -PreleaseTag=v0.1.0`. The expected public signer is `ad1ecee86cfe34a5449036141d8aaef54cfaf370bea845234096bc588a61367e`. Verify it before trusting a bundle.
+Use JDK 17, Android SDK, and Reseam CLI and Gradle plugin 0.39.1. The existing publisher key is `~/.reseam/bundle-signing.key`; keep it private and back it up securely. Build with `RESEAM_BUNDLE_KEY` pointing to it, `RESEAM_BIN` pointing to the matching CLI, and `./gradlew --no-daemon bundle -PreleaseTag=v0.1.1`. The expected public signer is `ad1ecee86cfe34a5449036141d8aaef54cfaf370bea845234096bc588a61367e`. Verify it before trusting a bundle.
 
-The pinned complete split set was patched and signed. Local signatures, raw DEX, independently parsed baseline profiles, other payloads, the bounded energy model and negative tests passed under the approved profile amendment. See [tests/README.md](tests/README.md) for results and reproduction. This does not establish device behavior: phone acceptance, release access and update testing remain pending.
+The local v0.1.1 bundle targets engine 0.39.1 (compatible with the Manager 0.39.x engine line; Manager and engine versions are separate). The pinned complete split set was patched and signed. Local signatures, raw DEX, independently parsed baseline profiles, other payloads, the bounded energy model and negative tests passed under the approved profile amendment. See [tests/README.md](tests/README.md) for results and reproduction. This does not establish device behavior: phone acceptance, release access and update testing remain pending.
 
 ## Release and phone steps
 
 Repository: https://github.com/MrPigss/Reseam-DuoPatch
 
-The patch source is unavailable until the first release is published:
+The patch source is unavailable until a release is published:
 - Index: https://github.com/MrPigss/Reseam-DuoPatch/releases/latest/download/patches.json
 - [Add to Reseam Manager](https://reseam.app/add/?url=https%3A%2F%2Fgithub.com%2FMrPigss%2FReseam-DuoPatch%2Freleases%2Flatest%2Fdownload%2Fpatches.json)
 

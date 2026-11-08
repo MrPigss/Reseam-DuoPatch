@@ -38,13 +38,11 @@ val energyPatch =
                 require(
                     instructions.subList(equality, equality + 6) ==
                         buildInstructions {
-                            ifNe(current, current + 1, "notFull")
-                            const4(fullness, 1)
-                            goto("write")
-                            label("notFull")
-                            const4(fullness, 0)
-                            label("write")
-                            iputBoolean(fullness, receiver, FieldRef(energyOwner, "i", "Z"))
+                            ifNe(current, current + 1, 4)
+                            constInt(fullness, 1)
+                            goto(2)
+                            constInt(fullness, 0)
+                            iput(fullness, receiver, FieldRef(energyOwner, "i", "Z"))
                             returnVoid()
                         },
                 )
@@ -54,9 +52,9 @@ val energyPatch =
             require(
                 instructions.take(3) ==
                     buildInstructions {
-                        andIntLit8(0, 4, 0x3f)
-                        const4(1, 0)
-                        const16(2, 0x3f)
+                        literal(Opcode.AND_INT_LIT8, 0, 0x3fL, 4)
+                        constInt(1, 0)
+                        constInt(2, 0x3f)
                     },
             )
             require(
@@ -79,16 +77,19 @@ val energyPatch =
             require(
                 instructions.subList(31, 34) ==
                     buildInstructions {
-                        moveFrom16(4, 17)
-                        iputBoolean(4, 3, FieldRef(energyOwner, "i", "Z"))
+                        move(4, 17, "Z")
+                        iput(4, 3, FieldRef(energyOwner, "i", "Z"))
                         returnVoid()
                     },
             )
-            ordinary.addInstructions(1) { const16(1, 25) }
-            synthetic.addInstructions(5) {
-                const16(5, 25)
-                // Clear serialized fullness after required-field validation, then recompute it.
-                andIntLit16(4, 4, -257)
-            }
+            ordinary.insertInstructions(1, buildInstructions { constInt(1, 25) })
+            synthetic.insertInstructions(
+                5,
+                buildInstructions {
+                    constInt(5, 25)
+                    // Clear serialized fullness after required-field validation, then recompute it.
+                    literal(Opcode.AND_INT_LIT16, 4, -257L, 4)
+                },
+            )
         }
     }

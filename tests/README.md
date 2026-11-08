@@ -11,6 +11,7 @@ INPUT=/tmp/duolingo-61045-research.S4kbyV/extracted
 XAPK=/tmp/duolingo-61045-research.S4kbyV/duolingo-6.104.5-2494-arm64.xapk
 RUN=$(mktemp -d /tmp/duolingo-61045-verify.XXXXXX)
 JAVA17="$HOME/.sdkman/candidates/java/17.0.15-tem"
+CLI=/tmp/reseam-0391.FYayP0/source/target/release/reseam
 DEXLIB=/opt/homebrew/Cellar/jadx/1.5.6/libexec/lib/jadx-1.5.6-all.jar
 APKSIG="$HOME/.gradle/caches/modules-2/files-2.1/com.android.tools.build/apksig/9.4.1/4b5fb2950c949258167c18b868e66d7a6f49ec3a/apksig-9.4.1.jar"
 CP="$RUN:$DEXLIB:$APKSIG"
@@ -21,9 +22,9 @@ BUNDLE="$ROOT/build/reseam/duolingo-patches.reseam"
 "$JAVA17/bin/javac" -cp "$DEXLIB:$APKSIG" -d "$RUN" tests/Verify61045.java
 "$JAVA17/bin/java" -Xmx3g -cp "$CP" Verify61045 preflight "$XAPK" "$INPUT"
 JAVA_HOME="$JAVA17" ANDROID_HOME="$HOME/Library/Android/sdk" \
-  RESEAM_BUNDLE_KEY="$HOME/.reseam/bundle-signing.key" ./gradlew --no-daemon bundle -PreleaseTag=v0.1.0
-reseam bundle list "$BUNDLE" --trust "$PUB" --verbose
-reseam patch "$INPUT/com.duolingo.apk" --split "$INPUT/config.arm64_v8a.apk" \
+  RESEAM_BUNDLE_KEY="$HOME/.reseam/bundle-signing.key" RESEAM_BIN="$CLI" ./gradlew --no-daemon bundle -PreleaseTag=v0.1.1
+"$CLI" bundle list "$BUNDLE" --trust "$PUB" --verbose
+"$CLI" patch "$INPUT/com.duolingo.apk" --split "$INPUT/config.arm64_v8a.apk" \
   --split "$INPUT/config.xxxhdpi.apk" --bundle "$BUNDLE" --trust "$PUB" --preset none \
   --enable app.example.patches.energyPatch --enable app.example.patches.interstitialPatch \
   --key "$APKKEY" --cert "$APKCERT" --output-dir "$RUN/patched"
@@ -44,8 +45,8 @@ JAVA_HOME="$HOME/.sdkman/candidates/java/21.0.6-amzn" jadx -r -m fallback \
 python3 tests/verify_energy.py "$RUN/EnergyConfig.original.java" "$RUN/EnergyConfig.patched.java"
 for kind in energy-mask interstitial-registers; do
   "$JAVA17/bin/java" -Xmx3g -cp "$CP" Verify61045 mutate "$INPUT/com.duolingo.apk" "$kind" "$RUN/$kind.apk"
-  if [ "$kind" = energy-mask ]; then patch=energyPatch; line='EnergyPatch.kt:55'; else patch=interstitialPatch; line='InterstitialPatch.kt:17'; fi
-  if reseam patch "$RUN/$kind.apk" --bundle "$BUNDLE" --trust "$PUB" --preset none \
+  if [ "$kind" = energy-mask ]; then patch=energyPatch; line='EnergyPatch.kt:53'; else patch=interstitialPatch; line='InterstitialPatch.kt:17'; fi
+  if "$CLI" patch "$RUN/$kind.apk" --bundle "$BUNDLE" --trust "$PUB" --preset none \
     --enable "app.example.patches.$patch" --key "$APKKEY" --cert "$APKCERT" \
     --output "$RUN/$kind-output.apk" >"$RUN/$kind.log" 2>&1; then echo 'unexpected success'; exit 1; fi
   grep -F "$line" "$RUN/$kind.log"
@@ -106,7 +107,13 @@ done
 
 The six existing fixture paths are `$FIX/profile-container.apk`, `$FIX/profile-checksum.apk`, `$FIX/profile-identity.apk`, `$FIX/profile-flags.apk`, `$FIX/profile-mapping.apk`, and `$FIX/profile-key.apk`. They are negative fixtures, not installable outputs.
 
-## Recorded results
+## 0.39.1 results
+
+Bundle: `build/reseam/duolingo-patches.reseam`, SHA-256 `9a60f6679046fdd908f093d92daa2ebfce8e725c0ff4e67f0591773abc09ca18`. Trusted catalog reports engine 0.39.1, version 0.1.1, the same publisher and exactly two patches. Fresh signed splits, logs and new negative fixtures: `/tmp/duolingo-61045-0391.UM1tZi/`. Preflight, raw checks on both old and new output, profiles, complete output verification, 5,120-case model, three guard/branch negatives and six profile negatives passed. Old/new fallback EnergyConfig and f7l output is identical. Wrong-trust patching and tampered-payload patching were rejected; catalog listing alone did not detect the payload tamper, so do not treat listing as payload validation. Kotlin LSP lacked the Reseam and standard library classpath; Gradle compilation succeeded.
+
+The official release offers Linux/Windows binaries but no macOS binary or release assets/checksums. The local macOS CLI was built separately from official tag v0.39.1 commit `a47961c6261a7cf61b56d11dbb0b22efd643310e` using the pinned Rust 1.98.1 and BoltFFI 0.31.0, at `/tmp/reseam-0391.FYayP0/source/target/release/reseam`; the 0.28.0 CLI was not replaced. Paths under `/tmp` are ephemeral. Phone behavior and update acceptance remain untested.
+
+## Historical 0.28.0 results
 
 Initial split patch run and signed outputs: `/tmp/duolingo-61045-verify.Q3gySy/`. Amendment verifier, profile fixtures and logs: `/tmp/duolingo-61045-profile.qfHn5A/`. Bundle SHA-256: `ec747882a0718660f7366e3d6d3e18941a4f7ec3f890997db4656a4236b541ad`.
 

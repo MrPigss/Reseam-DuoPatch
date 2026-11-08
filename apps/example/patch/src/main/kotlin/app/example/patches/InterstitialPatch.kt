@@ -17,7 +17,23 @@ val interstitialPatch =
                     !method.isStatic && method.registersSize == 3 && method.insSize == 1,
             )
             val instructions = method.instructions
-            require(instructions.size == 26 && instructions.sumOf { it.codeUnitSize } == 49)
+            require(
+                instructions.size == 26 && instructions.sumOf {
+                    when (it.opcode) {
+                        Opcode.CONST_4, Opcode.MOVE_RESULT, Opcode.MOVE_RESULT_OBJECT,
+                        Opcode.RETURN,
+                        -> 1
+
+                        Opcode.IGET_OBJECT, Opcode.CHECK_CAST, Opcode.INSTANCE_OF,
+                        Opcode.IF_NEZ,
+                        -> 2
+
+                        Opcode.INVOKE_VIRTUAL -> 3
+
+                        else -> error("Unexpected readiness opcode: ${it.opcode}")
+                    }
+                } == 49,
+            )
             // Identify only the automatic interstitial coordinator's readiness dependencies.
             require(
                 instructions.mapNotNull { it.fieldRef } ==
@@ -43,7 +59,7 @@ val interstitialPatch =
                 3,
                 0,
                 buildInstructions {
-                    const4(0, 0)
+                    constInt(0, 0)
                     returnValue(0)
                 },
             )
