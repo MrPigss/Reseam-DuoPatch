@@ -14,3 +14,17 @@ local.properties
 
 .DS_Store
 Thumbs.db
+
+*.pk8
+*.der
+*.pem
+*.p12
+*.pfx
+*.b64
+*.apk
+*.apkm
+*.apks
+*.xapk
+*.reseam
+
+bin/

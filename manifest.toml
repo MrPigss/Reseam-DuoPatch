@@ -1,5 +1,6 @@
 [bundle]
-name = "example-patches"
-author = "Your Name"
-description = "Example patches for Reseam"
+name = "duolingo-patches"
+author = "Thomas Eeckhout"
+description = "Experimental Duolingo energy and interstitial patches"
+license = "AGPL-3.0-or-later"
 format_version = 1

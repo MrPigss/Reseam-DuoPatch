@@ -1,73 +1,29 @@
-<p align="center">
-  <img src="https://reseam.app/logo.svg" alt="Reseam logo" width="96">
-</p>
+# Duolingo patches (experimental)
 
-<h1 align="center">Reseam patch bundle template</h1>
+This unpublished bundle targets Duolingo **6.104.5** only:
 
-Start here to write your own patches for [Reseam](https://reseam.app). Copy this repository, rename a few things, and you have a bundle that builds, signs itself, and publishes releases Reseam Manager can install.
+- `app.example.patches.energyPatch`: sets constructor current energy to 25.
+- `app.example.patches.interstitialPatch`: disables one automatic interstitial readiness decision.
 
-It ships two example patches that work on any app:
+Compatibility metadata checks the version name, not build code or ABI. The original inspected variant is build 2494, arm64-v8a/xxxhdpi, with base, ABI and density APKs. Neither change proves device behavior: lesson limits and ads require phone testing.
 
-- `Enable debugging` edits the manifest.
-- `Allow screenshots` redirects calls into Kotlin code shipped in the bundle (an extension).
+## Build and verification
 
-The [docs](https://reseam.app/docs/authoring/start/) walk through this template step by step.
+Use JDK 17, Android SDK, and Reseam CLI and Gradle plugin 0.28.0. The existing publisher key is `~/.reseam/bundle-signing.key`; keep it private and back it up securely. Build with `RESEAM_BUNDLE_KEY` pointing to it and `./gradlew --no-daemon bundle -PreleaseTag=v0.1.0`. The expected public signer is `ad1ecee86cfe34a5449036141d8aaef54cfaf370bea845234096bc588a61367e`. Verify it before trusting a bundle.
 
-## Setup
+The pinned complete split set was patched and signed. Local signatures, raw DEX, independently parsed baseline profiles, other payloads, the bounded energy model and negative tests passed under the approved profile amendment. See [tests/README.md](tests/README.md) for results and reproduction. This does not establish device behavior: phone acceptance, release access and update testing remain pending.
 
-- JDK 17.
-- Android SDK, with `ANDROID_HOME` pointing at it.
-- The `reseam` CLI, on `PATH` or at the path in `RESEAM_BIN`. Use the version that matches the plugin version in `settings.gradle.kts`. Releases ship Linux x64 and Windows x64 binaries; on other platforms [build it from source](https://reseam.app/docs/cli/install/).
-- A signing key: `reseam bundle keygen --out ~/.reseam/bundle-signing.key`. It prints the public key users will trust. Keep the key file private and out of the repository.
+## Release and phone steps
 
-## Make it yours
+Repository: https://github.com/MrPigss/Reseam-DuoPatch
 
-1. Set `name`, `author`, and `description` in `manifest.toml`, and `rootProject.name` in `settings.gradle.kts`.
-2. Rename `apps/example` to the app you patch and change the `app.example` packages to your own.
-3. Replace the example patches with your own.
+The patch source is unavailable until the first release is published:
+- Index: https://github.com/MrPigss/Reseam-DuoPatch/releases/latest/download/patches.json
+- [Add to Reseam Manager](https://reseam.app/add/?url=https%3A%2F%2Fgithub.com%2FMrPigss%2FReseam-DuoPatch%2Freleases%2Flatest%2Fdownload%2Fpatches.json)
 
-Layout:
+After completing local verification, audit tracked files for secrets and binaries. Set `BUNDLE_SIGNING_KEY_B64` privately to the base64-encoded **same** publisher key (base64 is not encryption). The existing tag-triggered workflow can publish the bundle and `patches.json`. Compare its public key with the key above before trusting it in Manager. Test installation, lesson limits, ads, login, results, restart and sync on the phone, noting subscription status; test updates separately.
 
-```text
-manifest.toml                     bundle name, author, description
-settings.gradle.kts               Reseam plugin version
-apps/<app>/patch/                 Kotlin patches, one module per app
-apps/<app>/extensions/<name>/     Kotlin code injected into the app
-apps/<app>/settings/              in-app settings and translated strings (optional)
-shared/<name>/                    extensions used by more than one app
-```
-
-Modules need no build script. The `app.reseam.workspace` plugin configures them from the layout. How to write patches is in [Your first patch](https://reseam.app/docs/authoring/first_patch/).
-
-## Build and test
-
-```shell
-./gradlew bundle
-reseam bundle list build/reseam/example-patches.reseam
-reseam patch app.apk \
-  --bundle build/reseam/example-patches.reseam \
-  --trust <public key> \
-  --enable "Enable debugging" \
-  --output patched.apk
-```
-
-## Release
-
-The workflow in `.github/workflows/release.yml` runs on `v*` tags, on GitHub and on Forgejo, including Codeberg. It builds and signs the bundle, then [`reseam release patches`](https://reseam.app/docs/cli/release/) adds the release to the `patches.json` of your latest release with the commit subjects since the previous tag as its notes, and publishes both on a release.
-
-1. Add the signing key as the repository secret `BUNDLE_SIGNING_KEY_B64`: `base64 -w0 ~/.reseam/bundle-signing.key`.
-2. On Forgejo, set the repository variable `RUNNER` to the label of a runner with Java and Node.js. GitHub uses `ubuntu-latest`.
-3. Push a tag: `git tag v0.1.0 && git push origin v0.1.0`.
-
-Share your patch source with this link. It opens Reseam Manager, which shows the source's apps, patches and signing key before adding it, and keeps it up to date from your latest release. Every release lists the link too.
-
-```text
-https://reseam.app/add/?url=https%3A%2F%2Fgithub.com%2F<owner>%2F<repo>
-```
-
-Without Reseam Manager, the link opens a page with the steps to add the source. Publish your public key where users can check it against the one Reseam Manager shows.
-
-When you move to a new Reseam version, bump the plugin version in `settings.gradle.kts`. The release workflow downloads the CLI of that same version.
+The bundle publisher key and APK signing key are different identities. A store-signed installation normally cannot be replaced by a differently signed APK, and Manager may use a different APK identity from the CLI. Sync progress and understand local-data loss before any uninstall; never uninstall automatically.
 
 ## License
 
